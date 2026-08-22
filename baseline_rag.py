@@ -10,8 +10,7 @@ import json
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
-CORPUS_PATH = "corpus.jsonl"
-CORPUS_PATH = "/home/mehdi/Documents/projects/knowledge_graph_examples/i4twins/corpus.jsonl"
+CORPUS_PATH = "./corpus.jsonl"
 CHUNK_SIZE = 400
 EMBED_MODEL = "all-MiniLM-L6-v2"
 EMBED_MODEL = "/home/mehdi/Documents/projects/knowledge_graph_examples/QA_From_Your_Data/checkpoints/all-MiniLM-L6-v2"
@@ -57,7 +56,7 @@ def answer(query, chunks, vectors, model):
     return f"[{hit['doc_id']}] {hit['text']}"
 
 
-if __name__ == "__main__":
+def main():
     docs = load_docs(CORPUS_PATH)
     model = SentenceTransformer(EMBED_MODEL)
     chunks, vectors = build_index(docs, model)
@@ -71,3 +70,6 @@ if __name__ == "__main__":
         print("Q:", q)
         print("A:", answer(q, chunks, vectors, model))
         print("-" * 60)
+
+if __name__ == "__main__":
+    main()

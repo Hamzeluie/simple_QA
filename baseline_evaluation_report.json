@@ -1,0 +1,329 @@
+{
+  "metrics": {
+    "hit_at_k": 1.0,
+    "mrr": 1.0,
+    "avg_keyword_coverage": 0.9,
+    "abstention_accuracy": 0.3333333333333333,
+    "false_abstention_rate": 0.0,
+    "combined_abstention_retrieval_rate": 0.0,
+    "in_scope_hit_at_k": 1.0,
+    "abstention_hit_at_k": 1.0,
+    "abstention_type_abstain_accuracy": 0.0,
+    "out_of_scope_abstain_accuracy": 0.0,
+    "k": 3,
+    "total_questions": 15,
+    "in_scope_count": 5,
+    "out_of_scope_count": 5,
+    "abstention_count": 5
+  },
+  "per_question": [
+    {
+      "question": "What is the nominal flow rate and operating temperature range of the P-200 centrifugal process pump?",
+      "type": "in_scope",
+      "category": "specifications",
+      "expected_doc_ids": [
+        "DOC-01"
+      ],
+      "retrieved_doc_ids": [
+        "DOC-01",
+        "DOC-03",
+        "DOC-02"
+      ],
+      "abstained": false,
+      "score": 0.8159688711166382,
+      "answer_text": "The P-200 is a centrifugal process pump used for water and light-fluid transfer. Nominal flow rate is 40 m3/h. The maximum operating pressure is 16 bar. Inlet size is DN65 and outlet size is DN50. Operating temperature range is 5 to 90 degrees Celsius. The pump uses a mechanical seal and requires flooded suction.",
+      "hit_at_k": 1,
+      "mrr": 1.0,
+      "abstention_correct": 1,
+      "combined": 0,
+      "keyword_coverage": 1.0
+    },
+    {
+      "question": "According to the general preventive maintenance intervals, how often should compressors be serviced?",
+      "type": "in_scope",
+      "category": "maintenance_intervals",
+      "expected_doc_ids": [
+        "DOC-12"
+      ],
+      "retrieved_doc_ids": [
+        "DOC-12",
+        "DOC-02",
+        "DOC-03"
+      ],
+      "abstained": false,
+      "score": 0.7135792970657349,
+      "answer_text": "General intervals: inspect belts and couplings monthly; lubricate applicable bearings per the equipment sheet; check instrument calibration yearly. Pumps are serviced every 2000 hours and compressors every 4000 hours. Keep a record of every intervention with date and technician.",
+      "hit_at_k": 1,
+      "mrr": 1.0,
+      "abstention_correct": 1,
+      "combined": 0,
+      "keyword_coverage": 1.0
+    },
+    {
+      "question": "What specific troubleshooting steps should be taken when error code E-115 appears?",
+      "type": "in_scope",
+      "category": "error_codes",
+      "expected_doc_ids": [
+        "DOC-08"
+      ],
+      "retrieved_doc_ids": [
+        "DOC-08",
+        "DOC-07",
+        "DOC-13"
+      ],
+      "abstained": false,
+      "score": 0.7200628519058228,
+      "answer_text": "Code E-115 indicates a sensor fault, usually an open circuit on a temperature probe. Check wiring and the probe connector. Code E-120 indicates a communication timeout between the controller and a field device. Verify the bus wiring and termination.",
+      "hit_at_k": 1,
+      "mrr": 1.0,
+      "abstention_correct": 1,
+      "combined": 0,
+      "keyword_coverage": 1.0
+    },
+    {
+      "question": "What is the acceptable vibration velocity limit for F-30 axial fan units, and how must the measurement be taken?",
+      "type": "in_scope",
+      "category": "vibration_limits",
+      "expected_doc_ids": [
+        "DOC-05",
+        "DOC-06"
+      ],
+      "retrieved_doc_ids": [
+        "DOC-05",
+        "DOC-06",
+        "DOC-09"
+      ],
+      "abstained": false,
+      "score": 0.940537691116333,
+      "answer_text": "For F-30 axial fan units, the acceptable vibration velocity limit is 4.5 mm/s RMS measured at the bearing housing. Readings above this level indicate imbalance or bearing wear and require investigation. Measure in three axes during routine checks.",
+      "hit_at_k": 1,
+      "mrr": 1.0,
+      "abstention_correct": 1,
+      "combined": 0,
+      "keyword_coverage": 1.0
+    },
+    {
+      "question": "There is a discrepancy in the documentation regarding the P-200 pump's maximum operating pressure. What are the two different values stated?",
+      "type": "in_scope",
+      "category": "conflict_resolution",
+      "expected_doc_ids": [
+        "DOC-01",
+        "DOC-02"
+      ],
+      "retrieved_doc_ids": [
+        "DOC-01",
+        "DOC-02",
+        "DOC-07"
+      ],
+      "abstained": false,
+      "score": 0.7621383666992188,
+      "answer_text": "The P-200 is a centrifugal process pump used for water and light-fluid transfer. Nominal flow rate is 40 m3/h. The maximum operating pressure is 16 bar. Inlet size is DN65 and outlet size is DN50. Operating temperature range is 5 to 90 degrees Celsius. The pump uses a mechanical seal and requires flooded suction.",
+      "hit_at_k": 1,
+      "mrr": 1.0,
+      "abstention_correct": 1,
+      "combined": 0,
+      "keyword_coverage": 0.5
+    },
+    {
+      "question": "What is the recommended oil change interval for the Turbine T-99?",
+      "type": "out_of_scope",
+      "category": "unrelated_equipment",
+      "expected_doc_ids": [],
+      "retrieved_doc_ids": [
+        "DOC-03",
+        "DOC-12",
+        "DOC-01"
+      ],
+      "abstained": false,
+      "score": 0.39531081914901733,
+      "answer_text": "The C-100 is a rotary screw air compressor. Rated output is 6 m3/min at 8 bar. Motor power is 37 kW. It includes an integrated air-oil separator and an after-cooler. Ambient operating temperature should stay below 40 degrees Celsius. Condensate must be drained daily.",
+      "hit_at_k": 0,
+      "mrr": 0.0,
+      "abstention_correct": 0,
+      "combined": 0,
+      "keyword_coverage": 0.0
+    },
+    {
+      "question": "How do I process a payroll refund for an employee in the maintenance department?",
+      "type": "out_of_scope",
+      "category": "hr_administrative",
+      "expected_doc_ids": [],
+      "retrieved_doc_ids": [
+        "DOC-14",
+        "DOC-13",
+        "DOC-15"
+      ],
+      "abstained": false,
+      "score": 0.3191477656364441,
+      "answer_text": "In an emergency, press the nearest emergency stop, isolate the main supply, and notify the shift supervisor. Do not attempt repairs while the line is energized. After a shutdown, inspect for damage and record the event before any restart.",
+      "hit_at_k": 0,
+      "mrr": 0.0,
+      "abstention_correct": 0,
+      "combined": 0,
+      "keyword_coverage": 0.0
+    },
+    {
+      "question": "What is the company's official policy on remote work for field technicians?",
+      "type": "out_of_scope",
+      "category": "company_policy",
+      "expected_doc_ids": [],
+      "retrieved_doc_ids": [
+        "DOC-11",
+        "DOC-13",
+        "DOC-14"
+      ],
+      "abstained": false,
+      "score": 0.2554771304130554,
+      "answer_text": "Before any maintenance, isolate all energy sources, apply a personal lock and tag, and verify zero energy. Only the person who applied a lock may remove it. Test the start control to confirm the equipment cannot operate. Restore energy only after all guards are refitted.",
+      "hit_at_k": 0,
+      "mrr": 0.0,
+      "abstention_correct": 0,
+      "combined": 0,
+      "keyword_coverage": 0.0
+    },
+    {
+      "question": "Can you provide the financial depreciation schedule for the M-50 electric motor?",
+      "type": "out_of_scope",
+      "category": "financial",
+      "expected_doc_ids": [],
+      "retrieved_doc_ids": [
+        "DOC-04",
+        "DOC-12",
+        "DOC-09"
+      ],
+      "abstained": false,
+      "score": 0.41698718070983887,
+      "answer_text": "Before starting the M-50 electric motor, confirm the isolation switch is off, verify insulation resistance, and ensure the coupling guard is fitted. Start in the no-load condition first. Check the direction of rotation against the arrow on the housing. Monitor current draw during the first minute; it must remain within the nameplate rating.",
+      "hit_at_k": 0,
+      "mrr": 0.0,
+      "abstention_correct": 0,
+      "combined": 0,
+      "keyword_coverage": 0.0
+    },
+    {
+      "question": "What is the Wi-Fi password for the compressor room?",
+      "type": "out_of_scope",
+      "category": "IT_network",
+      "expected_doc_ids": [],
+      "retrieved_doc_ids": [
+        "DOC-03",
+        "DOC-11",
+        "DOC-08"
+      ],
+      "abstained": false,
+      "score": 0.29414552450180054,
+      "answer_text": "The C-100 is a rotary screw air compressor. Rated output is 6 m3/min at 8 bar. Motor power is 37 kW. It includes an integrated air-oil separator and an after-cooler. Ambient operating temperature should stay below 40 degrees Celsius. Condensate must be drained daily.",
+      "hit_at_k": 0,
+      "mrr": 0.0,
+      "abstention_correct": 0,
+      "combined": 0,
+      "keyword_coverage": 0.0
+    },
+    {
+      "question": "Who is the manufacturer of the P-200 centrifugal process pump?",
+      "type": "abstention",
+      "category": "abstention_trap",
+      "expected_doc_ids": [
+        "DOC-01"
+      ],
+      "retrieved_doc_ids": [
+        "DOC-01",
+        "DOC-02",
+        "DOC-12"
+      ],
+      "abstained": false,
+      "score": 0.6635503172874451,
+      "answer_text": "The P-200 is a centrifugal process pump used for water and light-fluid transfer. Nominal flow rate is 40 m3/h. The maximum operating pressure is 16 bar. Inlet size is DN65 and outlet size is DN50. Operating temperature range is 5 to 90 degrees Celsius. The pump uses a mechanical seal and requires flooded suction.",
+      "hit_at_k": 1,
+      "mrr": 1.0,
+      "abstention_correct": 0,
+      "combined": 0,
+      "keyword_coverage": 0.0
+    },
+    {
+      "question": "What is the weight in kilograms of the C-100 rotary screw air compressor?",
+      "type": "abstention",
+      "category": "abstention_trap",
+      "expected_doc_ids": [
+        "DOC-03"
+      ],
+      "retrieved_doc_ids": [
+        "DOC-03",
+        "DOC-01",
+        "DOC-09"
+      ],
+      "abstained": false,
+      "score": 0.595798134803772,
+      "answer_text": "The C-100 is a rotary screw air compressor. Rated output is 6 m3/min at 8 bar. Motor power is 37 kW. It includes an integrated air-oil separator and an after-cooler. Ambient operating temperature should stay below 40 degrees Celsius. Condensate must be drained daily.",
+      "hit_at_k": 1,
+      "mrr": 1.0,
+      "abstention_correct": 0,
+      "combined": 0,
+      "keyword_coverage": 0.0
+    },
+    {
+      "question": "What specific brand or model of mechanical seal is used in the P-200 pump?",
+      "type": "abstention",
+      "category": "abstention_trap",
+      "expected_doc_ids": [
+        "DOC-01",
+        "DOC-02"
+      ],
+      "retrieved_doc_ids": [
+        "DOC-01",
+        "DOC-02",
+        "DOC-07"
+      ],
+      "abstained": false,
+      "score": 0.671849250793457,
+      "answer_text": "The P-200 is a centrifugal process pump used for water and light-fluid transfer. Nominal flow rate is 40 m3/h. The maximum operating pressure is 16 bar. Inlet size is DN65 and outlet size is DN50. Operating temperature range is 5 to 90 degrees Celsius. The pump uses a mechanical seal and requires flooded suction.",
+      "hit_at_k": 1,
+      "mrr": 1.0,
+      "abstention_correct": 0,
+      "combined": 0,
+      "keyword_coverage": 0.0
+    },
+    {
+      "question": "What is the purchase date and warranty expiration of the BRG-4410 bearing?",
+      "type": "abstention",
+      "category": "abstention_trap",
+      "expected_doc_ids": [
+        "DOC-09"
+      ],
+      "retrieved_doc_ids": [
+        "DOC-09",
+        "DOC-12",
+        "DOC-13"
+      ],
+      "abstained": false,
+      "score": 0.6322381496429443,
+      "answer_text": "The BRG-4410 is a sealed deep-groove ball bearing used on several fan and motor assemblies. Its recommended replacement interval is 12000 operating hours or when vibration exceeds the unit limit, whichever comes first. Use the correct puller and do not reuse a bearing once removed.",
+      "hit_at_k": 1,
+      "mrr": 1.0,
+      "abstention_correct": 0,
+      "combined": 0,
+      "keyword_coverage": 0.0
+    },
+    {
+      "question": "Does the M-50 electric motor have an integrated variable frequency drive (VFD)?",
+      "type": "abstention",
+      "category": "abstention_trap",
+      "expected_doc_ids": [
+        "DOC-04"
+      ],
+      "retrieved_doc_ids": [
+        "DOC-04",
+        "DOC-09",
+        "DOC-05"
+      ],
+      "abstained": false,
+      "score": 0.41254663467407227,
+      "answer_text": "Before starting the M-50 electric motor, confirm the isolation switch is off, verify insulation resistance, and ensure the coupling guard is fitted. Start in the no-load condition first. Check the direction of rotation against the arrow on the housing. Monitor current draw during the first minute; it must remain within the nameplate rating.",
+      "hit_at_k": 1,
+      "mrr": 1.0,
+      "abstention_correct": 0,
+      "combined": 0,
+      "keyword_coverage": 0.0
+    }
+  ]
+}
