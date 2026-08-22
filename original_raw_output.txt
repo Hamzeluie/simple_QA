@@ -1,0 +1,9 @@
+Q: What is the rated output of the C-100 compressor?
+A: [DOC-03] The C-100 is a rotary screw air compressor. Rated output is 6 m3/min at 8 bar. Motor power is 37 kW. It includes an integrated air-oil separator and an after-cooler. Ambient operating temperature should stay below 40 degrees Celsius. Condensate must be drained daily.
+------------------------------------------------------------
+Q: How often should temperature sensors be calibrated?
+A: [DOC-10] Calibrate temperature sensors every 12 months. Use a reference thermometer at two points, near the low and high ends of the operating range. Adjust the offset and span so the reading matches the reference within tolerance. Log the as-found and as-left values.
+------------------------------------------------------------
+Q: What should be checked before starting the M-50 motor?
+A: [DOC-04] Before starting the M-50 electric motor, confirm the isolation switch is off, verify insulation resistance, and ensure the coupling guard is fitted. Start in the no-load condition first. Check the direction of rotation against the arrow on the housing. Monitor current draw during the first minute; it must remain within the nameplate rating.
+------------------------------------------------------------
