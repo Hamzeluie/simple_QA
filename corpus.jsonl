@@ -14,3 +14,4 @@
 {"id": "DOC-14", "title": "Emergency Shutdown Steps", "text": "In an emergency, press the nearest emergency stop, isolate the main supply, and notify the shift supervisor. Do not attempt repairs while the line is energized. After a shutdown, inspect for damage and record the event before any restart."}
 {"id": "DOC-15", "title": "Spare Parts — Ordering Process", "text": "To order spare parts, identify the part number from the equipment sheet, check stock, and raise a request with the quantity and required date. Critical spares should be held in minimum stock. Record the part number and supplier for traceability."}
 {"id": "DOC-16", "title": "Sensor Data Logging", "text": "Field sensor readings are logged at fixed intervals with a timestamp and a device identifier. Store readings so that duplicates from a retried message are not counted twice. Keep raw values and any unit of measure. Review the log for gaps after a network interruption."}
+

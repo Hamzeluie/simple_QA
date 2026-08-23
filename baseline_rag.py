@@ -13,7 +13,6 @@ from sentence_transformers import SentenceTransformer
 CORPUS_PATH = "./corpus.jsonl"
 CHUNK_SIZE = 400
 EMBED_MODEL = "all-MiniLM-L6-v2"
-EMBED_MODEL = "/home/mehdi/Documents/projects/knowledge_graph_examples/QA_From_Your_Data/checkpoints/all-MiniLM-L6-v2"
 
 
 def load_docs(path):

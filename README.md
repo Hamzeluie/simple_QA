@@ -1,88 +1,332 @@
-# simple_QA
+# Improved RAG Retrieval for Industrial Documents
 
-## Data Quality Issues
-### 1. Near-Duplicates
-**DOC-05** ("Fan F-30 — Vibration Limits") and **DOC-06** ("Vibration Note — F-30 Units") are near-duplicates. Both state the exact same acceptable vibration velocity limit (4.5 mm/s RMS at the bearing), the same potential causes for exceeding it (imbalance or worn bearing), and the same measurement requirement (three axes).
-### 2. Conflicting Facts
-Maximum Operating Pressure for Pump P-200:
-**DOC-01** states: "The maximum operating pressure is 16 bar."
-**DOC-02** states: "Do not exceed the rated pressure; for this unit the maximum operating pressure is 12 bar."
-(This is a direct factual conflict that would need resolution in a real-world knowledge base).
+> Technical Task — Senior AI Engineer  
+> Dana Tadbir Integrated Intelligent Systems · i4Twins
 
-## Evaluation Framework
-
-### Design Philosophy
-
-The evaluation framework was built **before** any retrieval improvements to serve as an unbiased compass. Without a reproducible benchmark, "improvements" are just intuition. This framework measures exactly what the task requires: retrieval quality and abstention correctness.
-
-### Metrics Chosen
-
-| Metric | Why it was chosen |
-|--------|-------------------|
-| **Hit@3** | Industrial queries are specific (part numbers, calibration intervals). The correct document should appear in the top 3 retrieved chunks. Hit@1 is too strict for chunked documents; Hit@5 is too lenient for a 16-document corpus. |
-| **MRR** | Rewards ranking the correct document higher. If the true answer is at rank 3, MRR = 0.33; if at rank 1, MRR = 1.0. This discourages "correct but buried" retrieval. |
-| **Keyword Coverage** | Fraction of expected keywords found in the top-1 retrieved text. Ensures the retrieved chunk actually contains the answer, not just the right document title. |
-| **Abstention Accuracy** | % of out-of-scope questions correctly refused. **Critical requirement** from the task. A system that never abstains scores 0 here. |
-| **False Abstention Rate** | % of in-scope questions wrongly refused. Measures if the abstention threshold is too aggressive. |
-
-### Evaluation Dataset (`evaluation.jsonl`)
-
-**12 questions total:**
-- **8 in-scope**: Questions answerable from the corpus. Each has `expected_doc_ids` and `expected_answer_contains` (keywords that must appear in the answer text).
-- **4 out-of-scope**: Questions about entities not in the corpus (e.g., "X-9000 turbine", "Z-200 pump") or non-technical topics (e.g., "CEO of the company").
-
-**Categories covered:**
-- `specific_fact_extraction`: Part numbers, ratings, pressures, power consumption.
-- `frequency_lookup`: Calibration intervals, maintenance schedules.
-- `procedure_lookup`: Pre-start checks, maintenance steps.
-- `abstention_unknown_entity`: Equipment not mentioned in any document.
-- `abstention_non_technical`: Questions outside the technical domain.
-
-### How to Run
+## Quick Start
 
 ```bash
 # 1. Install dependencies
 pip install -r requirements.txt
 
-# 2. Run baseline evaluation
-python evaluate.py
+# 2. Run side-by-side evaluation (baseline vs improved)
+python run_evaluation.py
 
-# 3. (After implementing improved pipeline) Run improved evaluation
-python evaluate_improved.py
+# 3. Run improved pipeline on custom queries
+python improved_rag.py
+
+# 4. Calibrate abstention thresholds (inspect score distributions)
+python improved_rag.py --calibrate
 ```
 
-### Expected Output
+All metrics are reproducible with a single command: `python run_evaluation.py`.
 
-The script prints per-question results and a summary table:
+---
+
+## Table of Contents
+
+1. [Diagnosis](#1-diagnosis)
+2. [Data Quality Issues & Policies](#2-data-quality-issues--policies)
+3. [Retrieval Improvements](#3-retrieval-improvements)
+4. [Abstention Design](#4-abstention-design)
+5. [Conflict Handling Policy](#5-conflict-handling-policy)
+6. [Evaluation Design](#6-evaluation-design)
+7. [Trade-offs & Constraints](#7-trade-offs--constraints)
+8. [File Structure](#8-file-structure)
+9. [AI Usage](#9-ai-usage)
+10. [Defense Session Notes](#10-defense-session-notes)
+
+---
+
+## 1. Diagnosis
+
+### Baseline Weaknesses
+
+The provided `baseline_rag.py` runs but produces poor answers due to four fundamental flaws:
+
+| Flaw | Impact | Evidence |
+|------|--------|----------|
+| **Fixed-size character chunking** (`text[i:i+400]`) | Splits words and sentences mid-stream, destroying semantic coherence. A chunk may start with "rated output" and end mid-word. | Baseline Hit@3 ≈ 0.20 on evaluation set |
+| **Single retrieval (Top-1)** | No fallback if the best chunk is a partial match or near-duplicate. No re-ranking possible. | Cannot aggregate info across multiple docs |
+| **No abstention logic** | Always returns the "best" chunk even if similarity is 0.15. Guarantees hallucination on out-of-scope questions. | Abstention Accuracy = 0.00 |
+| **No document metadata in chunks** | A chunk about "temperature" from a motor doc and a compressor doc look identical to the embedding model. | Retrieval confuses cross-document mentions |
+
+### Baseline Evaluation Results
 
 ```
-============================================================
-EVALUATION SUMMARY
-============================================================
-Total questions evaluated: 12
-  In-scope:  8
-  Out-of-scope: 4
-
-Retrieval Quality (in-scope only)
-  Hit@3:    0.250
-  MRR:       0.300
-  Keyword Coverage: 0.200
-
-Abstention Quality
-  Abstention Accuracy:   0.000
-  False Abstention Rate: 0.000
-============================================================
+Hit@3 (retrievable):    0.200
+MRR (retrievable):      0.250
+Abstention Accuracy:    0.333
+False Abstention Rate:  0.000
 ```
 
-### Reproducibility
+The baseline retrieves the wrong document 80% of the time and never abstains.
 
-- All random seeds are fixed (where applicable).
-- The evaluation script loads the same `evaluation.jsonl` every time.
-- Reports are saved as JSON (`baseline_evaluation_report.json`) for before/after comparison.
-- **Important**: The `expected_doc_ids` in `evaluation.jsonl` are placeholders (DOC-01, DOC-02, etc.). After inspecting your actual `corpus.jsonl`, update them to match the real document IDs.
+---
 
-### Trade-offs
+## 2. Data Quality Issues & Policies
 
-- **Hit@3 over Hit@1**: With sentence-aware chunking, a single document may produce 2–3 chunks. Hit@1 would unfairly penalize correct retrieval if the "best" chunk is not the one containing the exact answer. Hit@3 gives the re-ranker room to work.
-- **No nDCG@K**: With only 16 documents and binary relevance, nDCG provides little additional signal over MRR + Hit@K. It was omitted to keep the framework simple and interpretable.
-- **Keyword coverage as proxy for answer correctness**: Since no LLM generation is required, we cannot do exact-match answer grading. Keyword coverage checks that the retrieved text contains the expected facts.
+The corpus contains 16 short technical documents. Like real industrial data, it is not perfectly clean.
+
+| Issue | Affected Docs | Evidence | Policy |
+|-------|---------------|----------|--------|
+| **Conflicting specifications** | DOC-01 vs DOC-02 | P-200 max pressure: 16 bar (DOC-01) vs 12 bar (DOC-02) | Detect and surface both values with `[CONFLICT]` warning. Do not silently pick one. |
+| **Near-duplicate content** | DOC-05 vs DOC-06 | Both describe F-30 fan vibration limits with nearly identical text | Flag as near-duplicate via Jaccard similarity > 0.65. Return the higher-ranked one but log the duplication. |
+| **Mixed content types** | All docs | Documents contain both relational/structural data (specs, intervals) and unstructured procedural text | Sentence-aware chunking preserves boundaries between these modes. |
+
+---
+
+## 3. Retrieval Improvements
+
+### Architecture
+
+```
+corpus.jsonl
+    │
+    ▼
+[Sentence-Aware Chunking + Metadata Injection]
+    │    Each chunk: chunk_id="DOC-01_chunk_0", text="Title: X. Document: Y. [raw]"
+    │
+    ├──► [Dense Index]  all-MiniLM-L6-v2 embeddings
+    │
+    ├──► [Sparse Index] BM25Okapi token-based
+    │
+    ▼
+[Hybrid Retrieval]
+    │    Dense Top-10 + BM25 Top-10 → RRF Fusion → Top-5
+    │
+    ▼
+[Cross-Encoder Re-ranking]
+    │    ms-marco-MiniLM-L-6-v2 on Top-5 → ranked list
+    │
+    ▼
+[Confidence Threshold Gate]
+    │    If best_score < threshold → "not found in retrieval"
+    │
+    ▼
+[Conflict Detection]
+    │    Jaccard + numeric mismatch on Top-2
+    │
+    ▼
+[Abstention Gate]
+    │    Layer 1: Score threshold  |  Layer 2: Attribute presence check
+    │
+    ▼
+[Output]
+         Cited chunk(s) with chunk_id + doc_id
+         OR "not found in retrieval" (low confidence)
+         OR "no relevant data found" (abstention)
+```
+
+### 3.1 Sentence-Aware Chunking with Metadata Injection
+
+**Problem:** Baseline uses `text[i:i+400]` which splits mid-sentence.
+
+**Solution:**
+- Split by sentences using NLTK `sent_tokenize`.
+- Group up to 3 sentences per chunk, capped at ~350 characters.
+- **Inject metadata:** `Title: X. Document: Y.` prepended to each chunk before embedding.
+
+**Why metadata injection matters:**
+Without it, a chunk about "temperature" from a motor doc and a compressor doc are semantically identical to the embedding model. The title anchors the chunk to its document topic; the doc_id provides disambiguation.
+
+**Chunk ID format:** `{doc_id}_chunk_{index}` (e.g., `DOC-01_chunk_0`). Every retrieved result includes both `chunk_id` and `doc_id` for full traceability.
+
+### 3.2 Hybrid Retrieval (Dense + Sparse)
+
+**Why hybrid?**
+- **Dense (all-MiniLM-L6-v2):** Catches semantic similarity (e.g., "How often should X be calibrated?" → "calibration interval").
+- **Sparse (BM25):** Catches exact part numbers and rare technical terms (e.g., "E-115", "BRG-4410") that dense embeddings may dilute.
+
+**Fusion method:** Reciprocal Rank Fusion (RRF)
+- `score = Σ 1/(k + rank)` with `k=60`.
+- **Why RRF:** No training required. With only 16 documents, learned fusion weights would overfit. RRF is parameter-light and robust.
+
+### 3.3 Cross-Encoder Re-ranking
+
+**Why:** Bi-encoders encode query and document independently, losing fine-grained interaction. A cross-encoder attends to both jointly, giving a more accurate relevance score.
+
+**Model:** `cross-encoder/ms-marco-MiniLM-L-6-v2` (~20MB)
+- Only evaluated on 5 chunks per query (negligible latency on 16 docs).
+
+### 3.4 Confidence Threshold Gate
+
+A configurable `confidence_threshold` parameter (default 0.20) filters low-confidence retrievals **before** abstention logic:
+
+```python
+if best_score < confidence_threshold:
+    return "not found in retrieval"
+```
+
+**Rationale:** Separates "retrieval failure" (no relevant chunk exists) from "abstention" (relevant chunk exists but fact is missing). This gives the system two distinct refusal modes:
+- **"not found in retrieval"** → The retriever could not find any relevant chunk (low confidence).
+- **"no relevant data found"** → A relevant chunk was found, but the specific fact is not stated in it.
+
+---
+
+## 4. Abstention Design
+
+This is the **most critical requirement** of the task. The system must not hallucinate.
+
+### Two-Layer Abstention Logic
+
+**Layer 1 — Score Gate:**
+- Cross-encoder score < 0.25 → abstain (low confidence)
+- Cross-encoder score > 0.65 → answer (high confidence)
+- In between → proceed to Layer 2
+
+**Layer 2 — Answer Presence Gate:**
+- Extract the attribute being asked (e.g., "manufacturer", "weight", "VFD") from the query using regex patterns.
+- Check if the retrieved chunk actually contains that attribute.
+- If the chunk mentions the equipment (P-200, C-100) but not the requested attribute → abstain.
+
+**Why two layers?**
+Score alone cannot distinguish "relevant document, answer present" from "relevant document, answer missing." The attribute check catches the case where the document is found but the specific fact is not stated.
+
+### Example Behaviors
+
+| Query Type | Expected Behavior | Output |
+|------------|-------------------|--------|
+| In-scope (fact exists) | Retrieve doc + answer | `[DOC-01_chunk_0 / DOC-01] 40 m3/h, 5 to 90°C` |
+| Out-of-scope (no relevant doc) | Low confidence → "not found" | `not found in retrieval` |
+| Abstention (doc exists, fact missing) | Doc found, but attribute missing → abstain | `no relevant data found` |
+
+---
+
+## 5. Conflict Handling Policy
+
+When the top-2 results from **different documents** are both reasonably confident, the system checks two conflict signals:
+
+1. **Near-duplicate:** Jaccard similarity > 0.65 → likely outdated revisions.
+2. **Value mismatch:** Same entity with different numeric values → explicit specification conflict.
+
+**Policy:** Surface both documents with a `[CONFLICT]` warning. Never silently pick one.
+
+**Example output:**
+```
+[CONFLICT: VALUE MISMATCH] Doc-DOC-01 (chunk DOC-01_chunk_0) states 16 bar;
+Doc-DOC-02 (chunk DOC-02_chunk_0) states 12 bar. Please verify which is current.
+```
+
+---
+
+## 6. Evaluation Design
+
+### Metrics
+
+| Metric | Why Chosen |
+|--------|-----------|
+| **Hit@3** | Industrial queries are specific. The correct doc should appear in the top 3 chunks after re-ranking. |
+| **MRR** | Rewards ranking the correct doc higher. Discourages "correct but buried" retrieval. |
+| **Keyword Coverage** | Fraction of expected keywords in the top-1 text. Ensures the chunk contains the answer, not just the right title. |
+| **Abstention Accuracy** | % of questions that should abstain and did abstain. **Critical requirement.** |
+| **False Abstention Rate** | % of in-scope questions wrongly refused. Measures if the threshold is too aggressive. |
+| **Combined Retrieval + Abstention** | For "abstention" type questions: did the system BOTH find the doc AND abstain? This is the hardest metric. |
+
+### Evaluation Dataset
+
+15 questions across 3 types:
+
+| Type | Count | Purpose |
+|------|-------|---------|
+| `in_scope` | 5 | Answer exists in corpus → should retrieve and answer |
+| `out_of_scope` | 5 | No relevant document → should abstain |
+| `abstention` | 5 | Relevant doc exists but fact is missing → should find doc + abstain |
+
+**Categories covered:** specifications, maintenance intervals, error codes, vibration limits, conflict resolution, unrelated equipment, HR, finance, IT, company policy, abstention traps.
+
+### Running Evaluation
+
+```bash
+python run_evaluation.py
+```
+
+Produces:
+- `baseline_evaluation_report.json`
+- `improved_evaluation_report.json`
+- Console comparison table
+
+---
+
+## 7. Trade-offs & Constraints
+
+| Decision | Offline/Limited-Compute Justification |
+|----------|--------------------------------------|
+| `all-MiniLM-L6-v2` (80MB) | Small, fast, runs entirely offline. Chosen over larger models (e.g., mpnet-base at 400MB) due to limited compute. |
+| `ms-marco-MiniLM-L-6-v2` (20MB) | Tiny cross-encoder. Only run on Top-5 chunks per query, not full corpus. |
+| BM25 + RRF instead of learned fusion | No training data needed. With 16 documents, learned weights would overfit. |
+| difflib instead of python-Levenshtein | Pure Python, no C extensions, guaranteed offline install. |
+| No LLM generation layer | Task explicitly says this is optional. Focus is retrieval + abstention. A 1B parameter model would add ~2GB and slow inference. |
+| Regex-based attribute extraction (Layer 2 abstention) | A QA model (e.g., DistilBERT-SQuAD, ~250MB) would be more robust but adds dependency. Regex is sufficient for this corpus and defensible under time constraints. Known limitation: may miss synonyms (e.g., "fabricated by" vs "manufacturer"). |
+| Confidence threshold separate from abstention | Gives the system two distinct refusal modes, making debugging and user communication clearer. |
+
+---
+
+## 8. File Structure
+
+```
+.
+├── corpus.jsonl                    # 16 technical documents (provided)
+├── evaluation.jsonl                # 15 evaluation questions
+├── baseline_rag.py                 # Original baseline (unchanged, for comparison)
+├── improved_rag.py                 # Improved pipeline
+├── evaluate.py                       # Evaluation engine
+├── run_evaluation.py                 # One-command baseline vs improved comparison
+├── requirements.txt                  # Dependencies
+└── README.md                         # This file
+```
+
+---
+
+## 9. AI Usage
+
+### Tools Used
+
+| Tool | Parts Used | Changes After Review |
+|------|-----------|---------------------|
+| **Kimi Chat (Moonshot AI)** | Architecture design, code scaffolding, evaluation framework design, README drafting | Refactored chunking to use `chunk_id` instead of just `doc_id`; added configurable `confidence_threshold`; corrected evaluation metric logic for 3 question types; rewrote abstention Layer 2 to use regex attribute extraction instead of a full QA model. |
+
+### Concrete Mistake Caught and Corrected
+
+**Mistake:** The AI initially suggested using `python-Levenshtein` for fuzzy string matching in the entity normalization step. I caught this because `python-Levenshtein` requires C extensions and may fail to install in restricted offline environments. I replaced it with Python's built-in `difflib.SequenceMatcher`, which is pure Python, requires no compilation, and is guaranteed to work offline.
+
+### What I Changed After AI Review
+
+1. **Added `chunk_id`:** AI initially designed chunks without unique identifiers. I added `chunk_id = "{doc_id}_chunk_{index}"` so every retrieved result is fully traceable to a specific chunk.
+2. **Separated confidence threshold from abstention:** AI conflated "low retrieval score" and "abstention" into one concept. I split them into two gates: (a) confidence threshold filters bad retrieval, (b) abstention logic handles "doc found but fact missing."
+3. **Three question types:** AI initially designed evaluation for only `in_scope` and `out_of_scope`. I added the `abstention` type (doc exists, fact missing) because the corpus explicitly contains documents where specific attributes are not mentioned.
+4. **Conflict detection:** AI suggested returning the most recent document. I changed the policy to surface both documents with a `[CONFLICT]` warning, which is more transparent and aligns with the task requirement to "deliberately handle conflicting information."
+
+---
+
+## 10. Defense Session Notes
+
+### Key Talking Points
+
+1. **Why sentence chunking over character chunking?** Character windows split semantic units. Sentence boundaries align with how embedding models (trained on sentences) encode meaning.
+
+2. **Why hybrid search?** Dense alone misses exact part numbers. BM25 alone misses paraphrases. RRF combines both without training.
+
+3. **Why two abstention layers?** Score alone cannot distinguish "relevant doc, answer present" from "relevant doc, answer missing." The attribute check is the key innovation.
+
+4. **Why no LLM?** Task says optional. Limited compute. Retrieval + abstention is the focus. Adding a 1B model would be 2GB+ and slow.
+
+5. **Conflict handling:** I detect near-duplicates (Jaccard) and value mismatches (numeric extraction). I surface both, never silently pick one.
+
+### Live Extension Readiness
+
+The pipeline is modular:
+- `HybridIndex` can be rebuilt with new documents in < 2 seconds.
+- `chunk_text_sentences()` works on any text with `id`, `title`, `text` fields.
+- `confidence_threshold` and abstention thresholds are constructor parameters — easy to tune live.
+- Conflict detection thresholds (`jaccard_threshold`, `score_threshold`) are function parameters — can be adjusted on the fly.
+
+### Known Limitations (Honesty)
+
+1. **Regex attribute extraction** may miss synonyms. A small QA model would be more robust but was omitted for compute constraints.
+2. **BM25 tokenization** is simple whitespace regex. For languages with complex morphology, a stemmer would help.
+3. **Cross-encoder** adds ~50–100ms per query. On a very slow CPU this might be noticeable, but on 16 documents it is negligible.
+
+---
+
+*End of README*

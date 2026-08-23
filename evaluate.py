@@ -35,9 +35,9 @@ from dataclasses import dataclass
 # Configuration
 # ---------------------------------------------------------------------------
 EVAL_PATH = "./evaluation.jsonl"
-EVAL_PATH = "/home/mehdi/Documents/projects/knowledge_graph_examples/i4twins/evaluation.jsonl"
+
 CORPUS_PATH = "./corpus.jsonl"
-CORPUS_PATH = "/home/mehdi/Documents/projects/knowledge_graph_examples/i4twins/corpus.jsonl"
+
 K = 3
 ABSTENTION_MARKER = "no relevant data found"
 
