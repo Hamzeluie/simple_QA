@@ -456,6 +456,9 @@ class ImprovedRAG:
         best_score = top_scores[0]
         best_chunk = top_chunks_obj[0]
 
+        if best_score < self.confidence_threshold:
+            return [], best_score, True
+        
         conflict_msg = detect_conflict(top_chunks_obj)
         if conflict_msg:
             top_chunks_data[0]["conflict_note"] = conflict_msg
@@ -540,6 +543,7 @@ if __name__ == "__main__":
         "What is the rated output of the C-100 compressor?",
         "How often should temperature sensors be calibrated?",
         "What should be checked before starting the M-50 motor?",
+        "What is the acceptable vibration velocity limit for F-30 axial fan units, and how must the measurement be taken?",
     ]
 
     for q in test_queries:
